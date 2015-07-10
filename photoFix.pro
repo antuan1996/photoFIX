@@ -15,7 +15,9 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         widget.cpp \
-    color_change.cpp
+    color_change.cpp \
+    addon.cpp
 
 HEADERS  += widget.h \
-    color_change.h
+    color_change.h \
+    addon.h

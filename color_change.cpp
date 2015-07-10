@@ -105,11 +105,11 @@ void color_change::fix_contrast_engine(u_int8_t *src, u_int8_t *dst,int w, int h
             low = min(low, cur);
             high = max(high, cur);
         }
-    int range = high -  low + 1;
+    int range = high -  low;
     for(int i = 0; i < h; ++i)
         for(int j = 0; j < w; ++j){
             u_int8_t cur = src[i * w + j];
-            cur = 1. * (cur - low) / range *  256;
+            cur = 1. * (cur - low) / range *  255.;
             dst[i * w + j] = cur;
         }
 }
