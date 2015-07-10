@@ -9,11 +9,12 @@ class ImageFix
 public:
     ImageFix();
     ~ImageFix();
-    void readFile(char *);
-    void writeFile(char *);
+    void readFile(const char *);
+    void writeFile(const char *);
     u_int8_t * pixmap;
     int width;
     int height;
+    int depth;
 };
 
 #endif // WIDGET_H

@@ -94,6 +94,7 @@ void color_change::RGB24toYUVplanar_engine(int w, int h, u_int8_t *src, u_int8_t
 void color_change::fix_contrast(){
     dstSize = width*height*3;
     dst_matrix = (u_int8_t*)(malloc(dstSize));
+    memcpy(dst_matrix,src_matrix,dstSize);
     fix_contrast_engine(src_matrix, dst_matrix , width, height);
 }
 
@@ -105,11 +106,11 @@ void color_change::fix_contrast_engine(u_int8_t *src, u_int8_t *dst,int w, int h
             low = min(low, cur);
             high = max(high, cur);
         }
-    int range = high -  low;
+    int range = high - low + 1;
     for(int i = 0; i < h; ++i)
         for(int j = 0; j < w; ++j){
             u_int8_t cur = src[i * w + j];
-            cur = 1. * (cur - low) / range *  255.;
+            cur = (1. * (cur - low) / range) * 256;
             dst[i * w + j] = cur;
         }
 }

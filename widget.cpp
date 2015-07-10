@@ -9,14 +9,15 @@ ImageFix::~ImageFix()
 {
 
 }
-void ImageFix::readFile(char *file_name){
+void ImageFix::readFile(const char *file_name){
     QImage checkimage;
-    checkimage.load(file_name);
+    checkimage.load(QString(file_name));
     checkimage = checkimage.convertToFormat(QImage::Format_RGB888);
     //checkimage = checkimage.scaledToWidth(640);
     //checkimage = checkimage.scaledToHeight(480);
     width = checkimage.width();
     height = checkimage.height();
+    depth = checkimage.depth();
     if(pixmap != 0) free(pixmap);
     pixmap = (u_int8_t *)malloc(width*height*3);
     int line_len = checkimage.bytesPerLine();
@@ -26,8 +27,8 @@ void ImageFix::readFile(char *file_name){
     }
 
 }
-void ImageFix::writeFile(char *file_name){
+void ImageFix::writeFile(const char *file_name){
     QImage checkimage(pixmap,width,height,QImage::Format_RGB888);
-    checkimage.save(file_name);
+    checkimage.save(QString(file_name));
 
 }
