@@ -56,6 +56,28 @@ void color_change::loadMemory(u_int8_t *mem_pos){
 void color_change::writeMemory(u_int8_t *mem_pos){
   memcpy( mem_pos,dst_matrix, dstSize);
 }
+void color_change::RGB24toRGBplanar(){
+    dstSize = width*height*3;
+    dst_matrix = (u_int8_t *)malloc(dstSize);
+    RGB24toRGBplanar_engine(width, height, src_matrix, dst_matrix);
+}
+
+void color_change::RGB24toRGBplanar_engine(int w, int h, u_int8_t *src, u_int8_t *dst){
+    const int len = 3;
+    u_int8_t * rch = dst;
+    u_int8_t * gch = dst + w*h;
+    u_int8_t * bch = dst + w*h + w*h ;
+    for(int i = 0; i < h; ++i)
+      for(int j = 0; j < w; ++j){
+        u_int32_t r = src[(i*w + j)*len +0];
+        u_int32_t g = src[(i*w + j)*len +1];
+        u_int32_t b = src[(i*w + j)*len +2];
+        rch[i*w + j] = r;
+        gch[i*w + j] = g;
+        bch[i*w + j] = b;
+      }
+}
+
 void color_change::RGB24toYUVplanar_engine(int w, int h, u_int8_t *src, u_int8_t *dst){
   const int len = 3;
 
@@ -93,24 +115,88 @@ void color_change::RGB24toYUVplanar_engine(int w, int h, u_int8_t *src, u_int8_t
 }
 void color_change::fix_contrast(){
     dstSize = width*height*3;
-    dst_matrix = (u_int8_t*)(malloc(dstSize));
+    int framesize = width * height;
+    dst_matrix = (u_int8_t *)(malloc(dstSize));
     memcpy(dst_matrix,src_matrix,dstSize);
     fix_contrast_engine(src_matrix, dst_matrix , width, height);
+    //fix_light_engine(src_matrix, dst_matrix , width, height);
+
+}
+void color_change::RGBplanartoRGB24(){
+    dst_matrix = (u_int8_t*)(malloc(width*height*3));
+    RGBplanartoRGB24_engine(width, height, src_matrix, dst_matrix);
 }
 
-void color_change::fix_contrast_engine(u_int8_t *src, u_int8_t *dst,int w, int h){
+void color_change::RGBplanartoRGB24_engine(int w, int h, u_int8_t * src, u_int8_t* dst){
+    const int len = 3;
+    u_int8_t * chr = src;
+    u_int8_t * chg = src + w*h;
+    u_int8_t * chb = src + w*h + w*h ;
+    for(int i = 0; i < h; ++i)
+      for(int j = 0; j < w; ++j){
+        u_int32_t r = chr[(i*w + j)];
+        u_int32_t g = chg[(i*w + j)];
+        u_int32_t b = chb[(i*w + j)];
+        dst[(i*w + j)*len + 0] = r;
+        dst[(i*w + j)*len + 1] = g;
+        dst[(i*w + j)*len + 2] = b;
+      }
+}
+void color_change::fix_light(){
+    dstSize = width*height*3;
+    int framesize = width * height;
+    dst_matrix = (u_int8_t *)(malloc(dstSize));
+    memcpy(dst_matrix,src_matrix,dstSize);
+    fix_light_engine(src_matrix, dst_matrix , width, height);
+}
+
+void color_change::fix_light_engine(u_int8_t *src, u_int8_t *dst,int w, int h){
  int low = 256 ,high = -1;
+    u_int64_t medium = 0;
     for(int i = 0; i < h; ++i)
         for(int j = 0; j < w; ++j){
             int cur = src[i * w + j];
+            medium += cur;
+           // qDebug() << medium;
             low = min(low, cur);
             high = max(high, cur);
         }
-    int range = high - low + 1;
+    medium =1.*medium/(1.*w*h);
+    qDebug() << medium;
+    int range_low = medium - low;
+    int range_high = high - medium;
+    //double p  = log(medium) / log(125.);
+    //p = p*p*p*p;
+    double p = 1.0;
+    if(medium > 140)
+    p = 2.0;
+    if(medium < 125)
+    p = 1/2.0;
+    double mn = 255. / pow(255,p);
     for(int i = 0; i < h; ++i)
         for(int j = 0; j < w; ++j){
-            u_int8_t cur = src[i * w + j];
-            cur = (1. * (cur - low) / range) * 256;
+            u_int32_t cur = src[i * w + j];
+            //qDebug()<< cur << "-";
+            cur = pow(cur,p) * mn;
+            if(cur >255) cur = 255;
+            //qDebug()<< cur;
+            dst[i * w + j] = cur;
+        }
+}
+
+void color_change::fix_contrast_engine(u_int8_t *src, u_int8_t *dst,int w, int h){
+ u_int32_t low = 256 ,high = 0;
+    for(int i = 0; i < h; ++i)
+        for(int j = 0; j < w; ++j){
+            u_int32_t cur = src[i * w + j];
+            low = min(low, cur);
+            high = max(high, cur);
+        }
+    int range = high - low;
+    for(int i = 0; i < h; ++i)
+        for(int j = 0; j < w; ++j){
+            u_int32_t cur = src[i * w + j];
+            cur = (255. * (cur - low) / range);
             dst[i * w + j] = cur;
         }
 }

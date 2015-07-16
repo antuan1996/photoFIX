@@ -7,7 +7,7 @@ ImageFix::ImageFix()
 
 ImageFix::~ImageFix()
 {
-
+    if(pixmap) free(pixmap);
 }
 void ImageFix::readFile(const char *file_name){
     QImage checkimage;
